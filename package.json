@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "setup:db": "node scripts/setup-db.mjs",
+    "setup:staff": "node scripts/create-staff.mjs",
+    "promote": "node scripts/promote-user.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { notifyOrderPlaced } from '@/lib/whatsapp/client'
-import { generateOrderNumber } from '@/lib/utils'
 import type { CartItem } from '@/types'
 
 export async function GET(request: NextRequest) {
@@ -44,7 +43,9 @@ export async function POST(request: NextRequest) {
     0
   )
 
-  const order_number = generateOrderNumber()
+  // Generate order number from DB sequence for uniqueness guarantees
+  const { data: seqData } = await serviceClient.rpc('generate_order_number')
+  const order_number: string = seqData ?? `DM-${Date.now()}`
 
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
