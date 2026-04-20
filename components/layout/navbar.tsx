@@ -82,6 +82,15 @@ export function Navbar() {
                 >
                   {t('menu')}
                 </Link>
+                <Link
+                  href="/track"
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    pathname === '/track' ? 'bg-brand-50 text-brand-700' : 'text-gray-600 hover:bg-gray-50'
+                  )}
+                >
+                  {t('trackOrder')}
+                </Link>
                 {user && (
                   <Link
                     href="/orders"
@@ -177,6 +186,7 @@ export function Navbar() {
           {!isStaff && (
             <>
               <Link href="/" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">{t('menu')}</Link>
+              <Link href="/track" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">{t('trackOrder')}</Link>
               {user && <Link href="/orders" onClick={() => setMobileOpen(false)} className="block px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50">{t('orders')}</Link>}
             </>
           )}
