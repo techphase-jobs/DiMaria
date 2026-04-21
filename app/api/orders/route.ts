@@ -35,8 +35,8 @@ export async function POST(request: NextRequest) {
 
   const supabase = await createClient()
   const serviceClient = await createServiceClient()
+  // Auth is optional — guests can order without an account
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
   const { items, delivery_type, delivery_address, special_instructions, customer_name, customer_phone, whatsapp_number } = body
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
   const { data: order, error: orderError } = await serviceClient
     .from('orders')
     .insert({
-      user_id: user.id,
+      user_id: user?.id ?? null,
       status: 'pending_payment',
       total,
       order_number,
