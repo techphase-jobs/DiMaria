@@ -11,17 +11,18 @@ import type { MenuItem, MenuCategory } from '@/types'
 
 const PAGE_SIZE = 12
 
-export function MenuGrid() {
+export function MenuGrid({ initialItems }: { initialItems: MenuItem[] }) {
   const { t } = useI18n()
-  const [items, setItems] = useState<MenuItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const [items, setItems] = useState<MenuItem[]>(initialItems)
+  const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const [category, setCategory] = useState<MenuCategory | 'all'>('all')
   const [search, setSearch] = useState('')
-  const [page, setPage] = useState(0)
-  const [hasMore, setHasMore] = useState(true)
+  const [page, setPage] = useState(1)
+  const [hasMore, setHasMore] = useState(initialItems.length === PAGE_SIZE)
   const observerRef = useRef<IntersectionObserver | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const isFirstRender = useRef(true)
 
   const fetchItems = useCallback(
     async (reset = false) => {
@@ -56,21 +57,25 @@ export function MenuGrid() {
       setLoading(false)
       setLoadingMore(false)
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [category, search, page]
   )
 
   useEffect(() => {
+    // Skip the very first render — initialItems already loaded server-side
+    if (isFirstRender.current && category === 'all' && !search) {
+      isFirstRender.current = false
+      return
+    }
+    isFirstRender.current = false
     fetchItems(true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category, search])
 
-  // Infinite scroll
   useEffect(() => {
     if (!hasMore || loadingMore) return
     observerRef.current = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        fetchItems(false)
-      }
+      if (entries[0].isIntersecting) fetchItems(false)
     })
     if (sentinelRef.current) observerRef.current.observe(sentinelRef.current)
     return () => observerRef.current?.disconnect()
@@ -78,7 +83,6 @@ export function MenuGrid() {
 
   return (
     <div>
-      {/* Search */}
       <div className="relative mb-4">
         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input
@@ -90,14 +94,11 @@ export function MenuGrid() {
         />
       </div>
 
-      {/* Category tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2 mb-5 scrollbar-hide">
         <button
           onClick={() => setCategory('all')}
           className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-            category === 'all'
-              ? 'bg-brand-600 text-white shadow-sm'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+            category === 'all' ? 'bg-brand-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
           }`}
         >
           {t('allCategories')}
@@ -107,9 +108,7 @@ export function MenuGrid() {
             key={cat}
             onClick={() => setCategory(cat)}
             className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-              category === cat
-                ? 'bg-brand-600 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              category === cat ? 'bg-brand-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
             }`}
           >
             {cat}
@@ -117,7 +116,6 @@ export function MenuGrid() {
         ))}
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div className="flex justify-center py-16">
           <Spinner className="h-8 w-8" />
