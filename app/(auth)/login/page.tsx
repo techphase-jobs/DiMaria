@@ -21,24 +21,33 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    try {
+      const supabase = createClient()
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
 
-    if (error) {
-      toast.error(error.message)
-      setLoading(false)
-      return
-    }
+      if (error) {
+        toast.error(error.message)
+        return
+      }
 
-    // Get role to redirect appropriately
-    const { data: { user } } = await supabase.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single()
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) { router.push('/'); return }
+
+      // Race the profile fetch against a 10s timeout so the button never freezes
+      const profileFetch = supabase.from('users').select('role').eq('id', user.id).single()
+      const timeout = new Promise<{ data: null }>((resolve) =>
+        setTimeout(() => resolve({ data: null }), 10000)
+      )
+      const { data: profile } = await Promise.race([profileFetch, timeout])
+
       if (profile?.role === 'admin') router.push('/admin')
       else if (profile?.role === 'kitchen') router.push('/kitchen')
       else router.push('/')
+    } catch {
+      toast.error('Login failed. Please try again.')
+    } finally {
+      setLoading(false)
     }
-    router.refresh()
   }
 
   return (
